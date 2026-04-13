@@ -1,0 +1,14 @@
+{
+  "version": 2,
+  "builds": [
+    { "src": "server/api/*.ts", "use": "@vercel/node" }
+  ],
+  "routes": [
+    { "src": "/api/sync", "dest": "server/api/sync.ts" },
+    { "src": "/api/faucet", "dest": "server/api/faucet.ts" },
+    { "src": "/api/ussd-verify", "dest": "server/api/ussd-verify.ts" },
+    { "src": "/api/time-sync", "dest": "server/api/time-sync.ts" },
+    { "src": "/api/agent/webhook", "dest": "server/api/agent.ts" },
+    { "src": "/api/telemetry", "dest": "server/api/telemetry.ts" }
+  ]
+}
