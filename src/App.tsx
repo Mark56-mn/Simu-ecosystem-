@@ -10,7 +10,7 @@ import {
   Activity, 
   Wallet, 
   ArrowRightLeft, 
-  Settings, 
+  Settings as SettingsIcon, 
   Menu,
   X,
   Zap,
@@ -23,7 +23,8 @@ import {
   RefreshCw,
   Droplet,
   CheckSquare,
-  Square
+  Square,
+  UserCog
 } from 'lucide-react';
 import { 
   AreaChart, 
@@ -36,6 +37,11 @@ import {
 } from 'recharts';
 
 import Asset from './pages/Asset';
+import BugReport from './pages/BugReport';
+import Settings from './pages/Settings';
+import AgentScreen from './pages/AgentScreen';
+import { AuthProvider, useAuth } from './hooks/useAuth';
+import { AuthFlow } from './screens/AuthFlow';
 
 const networkData = [
   { time: '00:00', cpuNodes: 1200, mobileNodes: 4500 },
@@ -65,9 +71,21 @@ const initialTransactions: Transaction[] = [
   { id: 'SM-2A77', from: 'Addis Ababa', to: 'Dakar Node', amount: '3,400 SIMU', status: 'Confirmed', time: '1 hour ago' },
 ];
 
-export default function App() {
+function AppContent() {
+  const { isAuthenticated } = useAuth();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'simulator' | 'faucet' | 'infrastructure' | 'assets'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'simulator' | 'faucet' | 'infrastructure' | 'assets' | 'bug-report' | 'settings' | 'agent'>('dashboard');
+  const [isAgent, setIsAgent] = useState(localStorage.getItem('agent_mode') === 'true');
+
+  useEffect(() => {
+    const handleStorage = () => setIsAgent(localStorage.getItem('agent_mode') === 'true');
+    window.addEventListener('storage', handleStorage);
+    return () => window.removeEventListener('storage', handleStorage);
+  }, []);
+
+  if (!isAuthenticated) {
+    return <AuthFlow />;
+  }
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-50 flex overflow-hidden font-sans">
@@ -129,7 +147,30 @@ export default function App() {
             active={activeTab === 'infrastructure'} 
             onClick={() => { setActiveTab('infrastructure'); setIsSidebarOpen(false); }}
           />
-          <NavItem icon={<Shield />} label="Security" />
+          <NavItem 
+            icon={<Shield />} 
+            label="Security" 
+          />
+          <NavItem 
+            icon={<AlertTriangle />} 
+            label="Bug Report" 
+            active={activeTab === 'bug-report'} 
+            onClick={() => { setActiveTab('bug-report'); setIsSidebarOpen(false); }}
+          />
+          {isAgent && (
+            <NavItem 
+              icon={<UserCog />} 
+              label="Agent Mode" 
+              active={activeTab === 'agent'} 
+              onClick={() => { setActiveTab('agent'); setIsSidebarOpen(false); }}
+            />
+          )}
+          <NavItem 
+            icon={<SettingsIcon />} 
+            label="Settings" 
+            active={activeTab === 'settings'} 
+            onClick={() => { setActiveTab('settings'); setIsSidebarOpen(false); }}
+          />
         </nav>
 
         <div className="p-4 border-t border-zinc-800">
@@ -176,9 +217,20 @@ export default function App() {
           {activeTab === 'faucet' && <FaucetView />}
           {activeTab === 'infrastructure' && <InfrastructureView />}
           {activeTab === 'assets' && <Asset />}
+          {activeTab === 'bug-report' && <BugReport />}
+          {activeTab === 'settings' && <Settings />}
+          {activeTab === 'agent' && <AgentScreen />}
         </div>
       </main>
     </div>
+  );
+}
+
+export default function App() {
+  return (
+    <AuthProvider>
+      <AppContent />
+    </AuthProvider>
   );
 }
 

@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react';
 import jsQR from 'jsqr';
 
-const SIMU_REGEX = /^SIMU:\d+:\d+:[a-f0-9]+:.+:[A-Za-z0-9+/=]+$/;
+const SIMU_REGEX = /^(SIMU:\d+:\d+:[a-f0-9]+:.+:[A-Za-z0-9+/=]+|SIMU:AGENT:[a-zA-Z0-9-]+)$/;
 
 export const useSmartScanner = (onValidScan: (data: string) => void) => {
   const [isValidating, setIsValidating] = useState(false);
