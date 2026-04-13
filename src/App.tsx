@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
 import { QRCodeSVG } from 'qrcode.react';
+import { testConnection } from './lib/supabase';
 import { 
   Shield, 
   Cpu, 
@@ -64,7 +65,7 @@ const initialTransactions: Transaction[] = [
 
 export default function App() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'simulator' | 'faucet'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'simulator' | 'faucet' | 'infrastructure'>('dashboard');
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-50 flex overflow-hidden font-sans">
@@ -115,7 +116,12 @@ export default function App() {
             onClick={() => { setActiveTab('faucet'); setIsSidebarOpen(false); }}
           />
           <NavItem icon={<Wallet />} label="Assets" />
-          <NavItem icon={<Cpu />} label="Ang Infrastructure" />
+          <NavItem 
+            icon={<Cpu />} 
+            label="Ang Infrastructure" 
+            active={activeTab === 'infrastructure'} 
+            onClick={() => { setActiveTab('infrastructure'); setIsSidebarOpen(false); }}
+          />
           <NavItem icon={<Shield />} label="Security" />
         </nav>
 
@@ -142,7 +148,10 @@ export default function App() {
               <Menu className="w-6 h-6" />
             </button>
             <h1 className="text-lg font-medium hidden sm:block">
-              {activeTab === 'dashboard' ? 'Ecosystem Overview' : activeTab === 'simulator' ? 'Mobile Node Simulator (v0.2)' : 'Testnet Faucet'}
+              {activeTab === 'dashboard' ? 'Ecosystem Overview' : 
+               activeTab === 'simulator' ? 'Mobile Node Simulator (v0.2)' : 
+               activeTab === 'faucet' ? 'Testnet Faucet' : 
+               'Ang Infrastructure'}
             </h1>
           </div>
           <div className="flex items-center gap-4">
@@ -158,6 +167,7 @@ export default function App() {
           {activeTab === 'dashboard' && <DashboardView />}
           {activeTab === 'simulator' && <SimulatorView />}
           {activeTab === 'faucet' && <FaucetView />}
+          {activeTab === 'infrastructure' && <InfrastructureView />}
         </div>
       </main>
     </div>
@@ -616,6 +626,75 @@ function FaucetView() {
             completed={tasks.inviteUser} 
             onClick={() => toggleTask('inviteUser')} 
           />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function InfrastructureView() {
+  const [status, setStatus] = useState<{ success: boolean; message: string } | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  const handleTestConnection = async () => {
+    setLoading(true);
+    setStatus(null);
+    const result = await testConnection();
+    setStatus(result);
+    setLoading(false);
+  };
+
+  return (
+    <div className="max-w-4xl mx-auto space-y-6">
+      <div className="bg-zinc-900 p-8 rounded-2xl border border-zinc-800">
+        <div className="flex items-center gap-4 mb-6">
+          <div className="w-12 h-12 rounded-xl bg-blue-500/10 flex items-center justify-center border border-blue-500/20">
+            <Cpu className="w-6 h-6 text-blue-400" />
+          </div>
+          <div>
+            <h2 className="text-2xl font-bold">Ang Infrastructure</h2>
+            <p className="text-zinc-400">Manage database connections and serverless endpoints.</p>
+          </div>
+        </div>
+
+        <div className="space-y-6">
+          <div className="p-6 rounded-xl border border-zinc-800 bg-zinc-950">
+            <h3 className="text-lg font-medium mb-2">Supabase Connection Test</h3>
+            <p className="text-sm text-zinc-400 mb-6">
+              Verify that your React Native / Web client can successfully connect to the Supabase PostgreSQL database using the Anon Key.
+            </p>
+
+            <button 
+              onClick={handleTestConnection}
+              disabled={loading}
+              className={`px-6 py-3 rounded-lg font-bold transition-colors flex items-center gap-2 ${
+                loading 
+                  ? 'bg-zinc-800 text-zinc-500 cursor-not-allowed' 
+                  : 'bg-blue-500 hover:bg-blue-400 text-zinc-950'
+              }`}
+            >
+              {loading ? <RefreshCw className="w-5 h-5 animate-spin" /> : <Activity className="w-5 h-5" />}
+              {loading ? 'Testing Connection...' : 'Test Database Connection'}
+            </button>
+
+            {status && (
+              <motion.div 
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className={`mt-6 p-4 rounded-lg border flex items-start gap-3 ${
+                  status.success 
+                    ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400' 
+                    : 'bg-red-500/10 border-red-500/30 text-red-400'
+                }`}
+              >
+                {status.success ? <CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5" /> : <AlertTriangle className="w-5 h-5 shrink-0 mt-0.5" />}
+                <div>
+                  <p className="font-medium">{status.success ? 'Connection Successful' : 'Connection Failed'}</p>
+                  <p className="text-sm opacity-80 mt-1">{status.message}</p>
+                </div>
+              </motion.div>
+            )}
+          </div>
         </div>
       </div>
     </div>
