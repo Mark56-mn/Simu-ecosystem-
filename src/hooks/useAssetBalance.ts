@@ -1,38 +1,53 @@
 import { useState, useEffect } from 'react';
-import * as SQLite from 'expo-sqlite';
-import NetInfo from '@react-native-community/netinfo';
 
 export const useAssetBalance = (deviceId: string) => {
   const [balance, setBalance] = useState(0);
   const [txs, setTxs] = useState<any[]>([]);
-  const db = SQLite.openDatabaseSync('simu.db');
 
   const loadLedger = () => {
-    const credits = db.getAllSync<{sum: number}>("SELECT SUM(amount) as sum FROM ledger WHERE status IN ('confirmed','provisional') AND type='credit'")[0]?.sum || 0;
-    const debits = db.getAllSync<{sum: number}>("SELECT SUM(amount) as sum FROM ledger WHERE status IN ('confirmed','provisional') AND type='debit'")[0]?.sum || 0;
+    const stored = localStorage.getItem('simu_ledger');
+    const ledger = stored ? JSON.parse(stored) : [];
+    
+    const credits = ledger.filter((t: any) => t.type === 'credit' && ['confirmed', 'provisional'].includes(t.status)).reduce((acc: number, t: any) => acc + t.amount, 0);
+    const debits = ledger.filter((t: any) => t.type === 'debit' && ['confirmed', 'provisional'].includes(t.status)).reduce((acc: number, t: any) => acc + t.amount, 0);
+    
     setBalance(credits - debits);
-    setTxs(db.getAllSync("SELECT * FROM ledger ORDER BY timestamp DESC LIMIT 50"));
+    setTxs(ledger.sort((a: any, b: any) => b.timestamp - a.timestamp).slice(0, 50));
   };
 
   const sync = async () => {
     try {
-      const claims = await (await fetch(`/api/faucet/claims?deviceId=${deviceId}`)).json();
-      db.withTransactionSync(() => {
-        claims.forEach((c: any) => db.runSync("INSERT OR IGNORE INTO ledger (id, amount, type, status, timestamp) VALUES (?, ?, 'credit', 'confirmed', ?)", [c.id, c.amount, Date.now()]));
-      });
+      const res = await fetch(`/api/faucet/claims?deviceId=${deviceId}`);
+      if (res.ok) {
+        const claims = await res.json();
+        const stored = localStorage.getItem('simu_ledger');
+        const ledger = stored ? JSON.parse(stored) : [];
+        
+        let changed = false;
+        claims.forEach((c: any) => {
+          if (!ledger.find((t: any) => t.id === c.id)) {
+            ledger.push({ id: c.id, amount: c.amount, type: 'credit', status: 'confirmed', timestamp: Date.now() });
+            changed = true;
+          }
+        });
+        
+        if (changed) {
+          localStorage.setItem('simu_ledger', JSON.stringify(ledger));
+        }
+      }
+      
       await fetch('/api/sync', { method: 'POST', body: JSON.stringify({ deviceId }) });
       loadLedger();
     } catch (e) {}
   };
 
   useEffect(() => {
-    db.execSync("CREATE TABLE IF NOT EXISTS ledger (id TEXT PRIMARY KEY, amount INTEGER, type TEXT, status TEXT, timestamp INTEGER)");
     loadLedger();
     sync();
-    const unsub = NetInfo.addEventListener(s => {
-      if (s.isConnected) sync();
-    });
-    return unsub;
+    
+    const handleOnline = () => sync();
+    window.addEventListener('online', handleOnline);
+    return () => window.removeEventListener('online', handleOnline);
   }, []);
 
   return { balance, txs, refresh: loadLedger };

@@ -35,6 +35,8 @@ import {
   ResponsiveContainer 
 } from 'recharts';
 
+import Asset from './pages/Asset';
+
 const networkData = [
   { time: '00:00', cpuNodes: 1200, mobileNodes: 4500 },
   { time: '04:00', cpuNodes: 1350, mobileNodes: 5200 },
@@ -65,7 +67,7 @@ const initialTransactions: Transaction[] = [
 
 export default function App() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'simulator' | 'faucet' | 'infrastructure'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'simulator' | 'faucet' | 'infrastructure' | 'assets'>('dashboard');
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-50 flex overflow-hidden font-sans">
@@ -115,7 +117,12 @@ export default function App() {
             active={activeTab === 'faucet'} 
             onClick={() => { setActiveTab('faucet'); setIsSidebarOpen(false); }}
           />
-          <NavItem icon={<Wallet />} label="Assets" />
+          <NavItem 
+            icon={<Wallet />} 
+            label="Assets" 
+            active={activeTab === 'assets'} 
+            onClick={() => { setActiveTab('assets'); setIsSidebarOpen(false); }}
+          />
           <NavItem 
             icon={<Cpu />} 
             label="Ang Infrastructure" 
@@ -168,6 +175,7 @@ export default function App() {
           {activeTab === 'simulator' && <SimulatorView />}
           {activeTab === 'faucet' && <FaucetView />}
           {activeTab === 'infrastructure' && <InfrastructureView />}
+          {activeTab === 'assets' && <Asset />}
         </div>
       </main>
     </div>

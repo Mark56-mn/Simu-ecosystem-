@@ -1,31 +1,47 @@
 import { useState } from 'react';
-import NetInfo from '@react-native-community/netinfo';
-import * as SQLite from 'expo-sqlite';
 
 export const useScanRedeem = (deviceId: string, onComplete: () => void) => {
   const [loading, setLoading] = useState(false);
-  const db = SQLite.openDatabaseSync('simu.db');
 
   const redeem = async (code: string, isUssd: boolean) => {
     setLoading(true);
     try {
-      const net = await NetInfo.fetch();
+      const isOnline = navigator.onLine;
       let amount = 0, sig = code;
       
-      if (isUssd && net.isConnected) {
-        const res = await (await fetch('/api/ussd', { method: 'POST', body: JSON.stringify({ code, deviceId }) })).json();
-        if (!res.valid) throw new Error('Invalid code');
-        amount = res.amount;
+      if (isUssd && isOnline) {
+        const res = await fetch('/api/ussd', { method: 'POST', body: JSON.stringify({ code, deviceId }) });
+        const data = await res.json();
+        if (!data.valid) throw new Error('Invalid code');
+        amount = data.amount;
       } else if (!isUssd) {
         const parts = code.split(':'); 
         amount = parseInt(parts[1], 10);
         sig = parts[5];
-      } else throw new Error('Offline USSD not supported');
+      } else {
+        throw new Error('Offline USSD not supported');
+      }
 
-      db.runSync("INSERT INTO ledger (id, amount, type, status, timestamp) VALUES (?, ?, 'credit', 'provisional', ?)", [sig, amount, Date.now()]);
+      const stored = localStorage.getItem('simu_ledger');
+      const ledger = stored ? JSON.parse(stored) : [];
+      
+      // Prevent double scan locally
+      if (ledger.find((t: any) => t.id === sig)) {
+        throw new Error('Already redeemed locally');
+      }
+
+      ledger.push({
+        id: sig,
+        amount,
+        type: 'credit',
+        status: 'provisional',
+        timestamp: Date.now()
+      });
+      
+      localStorage.setItem('simu_ledger', JSON.stringify(ledger));
       onComplete();
-    } catch (e) {
-      alert('Redemption failed');
+    } catch (e: any) {
+      alert(e.message || 'Redemption failed');
     }
     setLoading(false);
   };
