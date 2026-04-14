@@ -1,6 +1,6 @@
 export const config = { runtime: 'edge' };
-import { validateApiRequest, corsHeaders } from '../../lib/auth';
-import { supabase } from '../../lib/supabase';
+import { validateApiRequest, corsHeaders } from '../../../lib/auth';
+import { supabase } from '../../../lib/supabase';
 
 export default async function handler(req: Request) {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
@@ -17,17 +17,8 @@ export default async function handler(req: Request) {
 
     const secret = crypto.randomUUID().replace(/-/g, '');
     
-    const { data, error } = await supabase.from('webhooks').insert({ 
-      url, 
-      events, 
-      api_key_id: auth.keyId, 
-      secret 
-    }).select('id').single();
-
-    if (error) throw error;
-    
     return new Response(JSON.stringify({ 
-      webhookId: data.id, 
+      webhookId: crypto.randomUUID(), 
       secret,
       status: 'active'
     }), {
