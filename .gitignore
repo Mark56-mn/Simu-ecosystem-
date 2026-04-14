@@ -6,3 +6,8 @@ coverage/
 *.log
 .env*
 !.env.example
+
+# --- SIMU Monorepo Ignored Apps ---
+# The following apps are kept local and will NOT be pushed to GitHub
+/apps/ang-nodes/
+/apps/sim-dev-core/
