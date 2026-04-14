@@ -1,17 +1,38 @@
-export const config = { runtime: 'edge' };
-import { validateApiRequest, corsHeaders } from '../../lib/auth';
+import { VercelRequest, VercelResponse } from '@vercel/node';
+import { supabase } from '../../lib/supabase';
+import { extractBearerToken, validateApiKey } from '../../lib/auth';
 
-export default async function handler(req: Request) {
-  if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
-  
-  const auth = await validateApiRequest(req);
-  if (auth.error) return new Response(JSON.stringify({ error: auth.error }), { status: auth.status, headers: corsHeaders });
+export default async function handler(req: VercelRequest, res: VercelResponse) {
+  res.setHeader('Content-Type', 'application/json');
+  res.setHeader('Access-Control-Allow-Origin', '*');
 
-  const { searchParams } = new URL(req.url);
-  const address = searchParams.get('address');
-  const limit = parseInt(searchParams.get('limit') || '50');
+  if (req.method !== 'GET') {
+    return res.status(405).json({ error: 'Method not allowed' });
+  }
 
-  return new Response(JSON.stringify({ transactions: [], hasMore: false }), {
-    headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+  const token = extractBearerToken(req.headers.authorization);
+  if (!token || !(await validateApiKey(token))) {
+    return res.status(401).json({ error: 'Invalid or missing API key' });
+  }
+
+  const address = req.query.address as string;
+  if (!address) {
+    return res.status(400).json({ error: 'Missing address parameter' });
+  }
+
+  const { data, error } = await supabase
+    .from('ledger')
+    .select('*')
+    .eq('wallet_address', address)
+    .order('created_at', { ascending: false })
+    .limit(50);
+
+  if (error) {
+    return res.status(500).json({ error: 'Database query failed' });
+  }
+
+  return res.status(200).json({ 
+    address, 
+    transactions: data || []
   });
 }

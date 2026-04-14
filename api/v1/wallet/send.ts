@@ -1,19 +1,37 @@
-export const config = { runtime: 'edge' };
-import { validateApiRequest, corsHeaders } from '../../lib/auth';
+import { VercelRequest, VercelResponse } from '@vercel/node';
+import { supabase } from '../../lib/supabase';
+import { extractBearerToken, validateApiKey } from '../../lib/auth';
 
-export default async function handler(req: Request) {
-  if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
-  if (req.method !== 'POST') return new Response('Method Not Allowed', { status: 405, headers: corsHeaders });
-  
-  const auth = await validateApiRequest(req);
-  if (auth.error) return new Response(JSON.stringify({ error: auth.error }), { status: auth.status, headers: corsHeaders });
+export default async function handler(req: VercelRequest, res: VercelResponse) {
+  res.setHeader('Content-Type', 'application/json');
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
-  try {
-    const { from, to, amount, signature } = await req.json();
-    return new Response(JSON.stringify({ txId: crypto.randomUUID(), status: 'provisional', timestamp: Date.now() }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-    });
-  } catch (e) {
-    return new Response(JSON.stringify({ error: 'Invalid JSON body' }), { status: 400, headers: corsHeaders });
+  if (req.method === 'OPTIONS') {
+    return res.status(204).end();
   }
+
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed' });
+  }
+
+  const token = extractBearerToken(req.headers.authorization);
+  if (!token || !(await validateApiKey(token))) {
+    return res.status(401).json({ error: 'Invalid or missing API key' });
+  }
+
+  const { from_address, to_address, amount } = req.body || {};
+  if (!from_address || !to_address || !amount) {
+    return res.status(400).json({ error: 'Missing required parameters' });
+  }
+
+  // Basic mock implementation for send
+  return res.status(200).json({ 
+    status: 'success',
+    transaction_id: 'tx_' + Date.now(),
+    from: from_address,
+    to: to_address,
+    amount: amount
+  });
 }
