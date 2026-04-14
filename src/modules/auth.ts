@@ -1,41 +1,36 @@
-import * as Crypto from 'expo-crypto';
-import * as SecureStore from 'expo-secure-store';
-import * as LocalAuthentication from 'expo-local-authentication';
-
 const DEVICE_ID = 'device-123';
 
 const setSecure = async (key: string, val: string) => {
-  try { await SecureStore.setItemAsync(key, val); } 
-  catch { localStorage.setItem(key, val); }
+  localStorage.setItem(key, val);
 };
 
 const getSecure = async (key: string) => {
-  try { return await SecureStore.getItemAsync(key); } 
-  catch { return localStorage.getItem(key); }
+  return localStorage.getItem(key);
+};
+
+const digestStringAsync = async (str: string) => {
+  const msgUint8 = new TextEncoder().encode(str);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', msgUint8);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map((b) => b.toString(16).padStart(2, '0')).join('');
 };
 
 export const initWallet = async (pin: string) => {
-  const hash = await Crypto.digestStringAsync(Crypto.CryptoDigestAlgorithm.SHA256, pin + DEVICE_ID);
+  const hash = await digestStringAsync(pin + DEVICE_ID);
   await setSecure('pin_hash', hash);
   await setSecure('priv_key', 'mock_encrypted_ecdsa_key');
   localStorage.setItem('has_wallet', 'true');
 };
 
 export const verifyPin = async (pin: string) => {
-  const hash = await Crypto.digestStringAsync(Crypto.CryptoDigestAlgorithm.SHA256, pin + DEVICE_ID);
+  const hash = await digestStringAsync(pin + DEVICE_ID);
   const stored = await getSecure('pin_hash');
   return hash === stored;
 };
 
 export const enableBiometric = async () => {
-  try {
-    const hasHardware = await LocalAuthentication.hasHardwareAsync();
-    const isEnrolled = await LocalAuthentication.isEnrolledAsync();
-    if (hasHardware && isEnrolled) {
-      const result = await LocalAuthentication.authenticateAsync({ promptMessage: 'Login to SIMU' });
-      return result.success;
-    }
-  } catch (e) { console.warn('Biometrics not supported in this environment'); }
+  // Mock biometric for web preview
+  console.warn('Biometrics not supported in web preview');
   return false;
 };
 
