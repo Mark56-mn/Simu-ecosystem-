@@ -17,9 +17,6 @@ export default async function handler(req: Request) {
 
     const secret = crypto.randomUUID().replace(/-/g, '');
     
-    // Mock DB insert for edge compatibility without full pg setup
-    // const { data, error } = await supabase.from('webhooks').insert({ url, events, api_key_id: auth.keyId, secret }).select('id').single();
-
     return new Response(JSON.stringify({ 
       webhookId: crypto.randomUUID(), 
       secret,

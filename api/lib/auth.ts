@@ -1,4 +1,5 @@
 import { supabase } from './supabase';
+import { getRateLimiter } from './rateLimit';
 
 export const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -7,7 +8,6 @@ export const corsHeaders = {
 };
 
 export async function validateApiRequest(req: Request) {
-  // Support both Bearer token and x-api-key header
   const authHeader = req.headers.get('Authorization');
   const token = authHeader?.startsWith('Bearer ') 
     ? authHeader.split(' ')[1] 
@@ -25,9 +25,11 @@ export async function validateApiRequest(req: Request) {
     return { error: 'Invalid or inactive API key', status: 401 };
   }
 
-  // Rate limiting ready (Upstash/Redis logic goes here)
-  const isRateLimited = false; 
-  if (isRateLimited) return { error: 'Rate limit exceeded', status: 429 };
+  const ip = req.headers.get('x-forwarded-for') || '127.0.0.1';
+  const ratelimit = getRateLimiter(keyData.rate_limit || 100);
+  const { success } = await ratelimit.limit(`ratelimit_${token}_${ip}`);
+
+  if (!success) return { error: 'Rate limit exceeded', status: 429 };
 
   return { keyId: keyData.id };
 }

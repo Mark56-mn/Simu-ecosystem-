@@ -10,13 +10,7 @@ export default async function handler(req: Request) {
   const nodeId = new URL(req.url).searchParams.get('nodeId');
   if (!nodeId) return new Response(JSON.stringify({ error: 'Missing nodeId' }), { status: 400, headers: corsHeaders });
 
-  return new Response(JSON.stringify({ 
-    nodeId, 
-    reputation: 98, 
-    validations: 1420, 
-    earned: 50.5, 
-    status: 'active' 
-  }), {
+  return new Response(JSON.stringify({ nodeId, reputation: 98, validations: 1420, earned: 50.5, status: 'active' }), {
     headers: { ...corsHeaders, 'Content-Type': 'application/json' }
   });
 }

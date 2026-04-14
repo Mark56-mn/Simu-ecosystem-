@@ -1,0 +1,16 @@
+{
+  "name": "simu-api-gateway",
+  "version": "1.0.0",
+  "scripts": {
+    "dev": "vercel dev"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.39.0",
+    "@upstash/ratelimit": "^1.0.0",
+    "@upstash/redis": "^1.28.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0"
+  }
+}
