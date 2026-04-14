@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { Shield, UserCog, CheckCircle } from 'lucide-react';
+import { Shield, UserCog, CheckCircle, Bug } from 'lucide-react';
 import { verifyPin } from '../modules/auth';
 
 export default function Settings() {
   const [agentMode, setAgentMode] = useState(localStorage.getItem('agent_mode') === 'true');
+  const [forceUssd, setForceUssd] = useState(localStorage.getItem('force_ussd') === 'true');
   const [pinPrompt, setPinPrompt] = useState(false);
   const [pin, setPin] = useState('');
   const [loading, setLoading] = useState(false);
@@ -15,6 +16,12 @@ export default function Settings() {
     } else {
       setPinPrompt(true);
     }
+  };
+
+  const handleForceUssdToggle = () => {
+    const newVal = !forceUssd;
+    setForceUssd(newVal);
+    localStorage.setItem('force_ussd', newVal ? 'true' : 'false');
   };
 
   const confirmPin = async () => {
@@ -53,6 +60,24 @@ export default function Settings() {
             className={`w-14 h-8 rounded-full transition-colors relative ${agentMode ? 'bg-emerald-500' : 'bg-zinc-700'}`}
           >
             <div className={`w-6 h-6 bg-white rounded-full absolute top-1 transition-all ${agentMode ? 'left-7' : 'left-1'}`} />
+          </button>
+        </div>
+
+        <div className="flex items-center justify-between p-4 bg-zinc-950 rounded-2xl border border-zinc-800">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-xl bg-red-500/10 flex items-center justify-center">
+              <Bug className="w-6 h-6 text-red-400" />
+            </div>
+            <div>
+              <h2 className="text-lg font-bold text-white">Force USSD Fallback</h2>
+              <p className="text-sm text-zinc-400">Route receive flows via 6-digit code</p>
+            </div>
+          </div>
+          <button 
+            onClick={handleForceUssdToggle}
+            className={`w-14 h-8 rounded-full transition-colors relative ${forceUssd ? 'bg-emerald-500' : 'bg-zinc-700'}`}
+          >
+            <div className={`w-6 h-6 bg-white rounded-full absolute top-1 transition-all ${forceUssd ? 'left-7' : 'left-1'}`} />
           </button>
         </div>
       </div>

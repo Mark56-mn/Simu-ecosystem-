@@ -24,7 +24,8 @@ import {
   Droplet,
   CheckSquare,
   Square,
-  UserCog
+  UserCog,
+  Server
 } from 'lucide-react';
 import { 
   AreaChart, 
@@ -40,6 +41,7 @@ import Asset from './pages/Asset';
 import BugReport from './pages/BugReport';
 import Settings from './pages/Settings';
 import AgentScreen from './pages/AgentScreen';
+import AngInfrastructure from './pages/AngInfrastructure';
 import { AuthProvider, useAuth } from './hooks/useAuth';
 import { AuthFlow } from './screens/AuthFlow';
 
@@ -74,7 +76,7 @@ const initialTransactions: Transaction[] = [
 function AppContent() {
   const { isAuthenticated } = useAuth();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'simulator' | 'faucet' | 'infrastructure' | 'assets' | 'bug-report' | 'settings' | 'agent'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'simulator' | 'faucet' | 'infrastructure' | 'assets' | 'bug-report' | 'settings' | 'agent' | 'node'>('dashboard');
   const [isAgent, setIsAgent] = useState(localStorage.getItem('agent_mode') === 'true');
 
   useEffect(() => {
@@ -166,6 +168,12 @@ function AppContent() {
             />
           )}
           <NavItem 
+            icon={<Server />} 
+            label="Ang Node" 
+            active={activeTab === 'node'} 
+            onClick={() => { setActiveTab('node'); setIsSidebarOpen(false); }}
+          />
+          <NavItem 
             icon={<SettingsIcon />} 
             label="Settings" 
             active={activeTab === 'settings'} 
@@ -220,6 +228,7 @@ function AppContent() {
           {activeTab === 'bug-report' && <BugReport />}
           {activeTab === 'settings' && <Settings />}
           {activeTab === 'agent' && <AgentScreen />}
+          {activeTab === 'node' && <AngInfrastructure />}
         </div>
       </main>
     </div>

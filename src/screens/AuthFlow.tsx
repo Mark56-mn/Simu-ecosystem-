@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { Shield, Fingerprint, Users } from 'lucide-react';
+import { enableBiometric } from '../modules/auth';
 
 export const AuthFlow = () => {
   const { hasWallet, login, setup } = useAuth();
@@ -17,8 +18,12 @@ export const AuthFlow = () => {
   };
 
   const handleBio = async () => {
-    const success = await login();
-    if (!success) alert('Biometric failed or unavailable');
+    const success = await enableBiometric();
+    if (success) {
+      await login();
+    } else {
+      alert('Biometric failed or unavailable');
+    }
   };
 
   if (step === 'recovery') {

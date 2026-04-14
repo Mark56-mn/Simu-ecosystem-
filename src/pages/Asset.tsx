@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAssetBalance } from '../hooks/useAssetBalance';
 import { useScanRedeem } from '../hooks/useScanRedeem';
 import { SmartScanner } from '../components/SmartScanner';
+import { TransactionList } from '../components/TransactionList';
 import { ArrowUpRight, ArrowDownLeft, X, Download } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 import { downloadQR } from '../utils/downloadQR';
@@ -16,7 +17,23 @@ export default function Asset() {
   const [agentScanData, setAgentScanData] = useState<string | null>(null);
   const [agentAmount, setAgentAmount] = useState('');
   const [ussdCode, setUssdCode] = useState('');
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const { redeem, loading } = useScanRedeem(deviceId, () => { setScanMode(false); refresh(); });
+
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    await refresh();
+    if (navigator.vibrate) navigator.vibrate(50);
+    setIsRefreshing(false);
+  };
+
+  useEffect(() => {
+    const handleOnline = () => {
+      handleRefresh();
+    };
+    window.addEventListener('online', handleOnline);
+    return () => window.removeEventListener('online', handleOnline);
+  }, []);
 
   const handleScan = (data: string) => {
     if (data.startsWith('SIMU:AGENT:')) {
@@ -47,10 +64,6 @@ export default function Asset() {
     alert('Payment sent to agent. Waiting for agent confirmation.');
     setAgentScanData(null);
     setScanMode(false);
-  };
-  const getBadge = (status: string) => {
-    const colors: any = { provisional: '🟡 Provisional', confirmed: '🟢 Confirmed', rolled_back: '🔴 Rolled Back' };
-    return colors[status] || '⚪ Unknown';
   };
 
   const handleSend = () => {
@@ -104,26 +117,7 @@ export default function Asset() {
           </button>
         </div>
 
-        <h2 className="text-lg font-medium mb-4 text-zinc-400">Recent Transactions</h2>
-        <div className="space-y-3 overflow-y-auto max-h-[300px] pr-2">
-          {txs.length === 0 ? (
-            <p className="text-zinc-500 text-center py-8">No transactions yet</p>
-          ) : (
-            txs.map((item: any) => (
-              <div key={item.id} className="flex items-center justify-between p-4 bg-zinc-900 rounded-2xl border border-zinc-800">
-                <div>
-                  <div className={`text-lg font-bold ${item.type === 'credit' ? 'text-emerald-400' : 'text-white'}`}>
-                    {item.type === 'credit' ? '+' : '-'}{item.amount}
-                  </div>
-                  <div className="text-xs text-zinc-500 mt-1">{new Date(item.timestamp).toLocaleString()}</div>
-                </div>
-                <div className="text-xs font-medium bg-zinc-950 px-3 py-1.5 rounded-full border border-zinc-800">
-                  {getBadge(item.status)}
-                </div>
-              </div>
-            ))
-          )}
-        </div>
+        <TransactionList transactions={txs} onRefresh={handleRefresh} refreshing={isRefreshing} />
       </div>
 
       {sendMode && (
