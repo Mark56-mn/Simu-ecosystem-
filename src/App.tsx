@@ -26,7 +26,8 @@ import {
   Square,
   UserCog,
   Server,
-  TerminalSquare
+  TerminalSquare,
+  ShieldAlert
 } from 'lucide-react';
 import { 
   AreaChart, 
@@ -44,6 +45,7 @@ import Settings from './pages/Settings';
 import AgentScreen from './pages/AgentScreen';
 import AngInfrastructure from './pages/AngInfrastructure';
 import AdminDashboard from './pages/AdminDashboard';
+import SecurityDashboard from './pages/SecurityDashboard';
 import { AuthProvider, useAuth } from './hooks/useAuth';
 import { AuthFlow } from './screens/AuthFlow';
 
@@ -78,7 +80,7 @@ const initialTransactions: Transaction[] = [
 function AppContent() {
   const { isAuthenticated } = useAuth();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'simulator' | 'faucet' | 'infrastructure' | 'assets' | 'bug-report' | 'settings' | 'agent' | 'node' | 'admin'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'simulator' | 'faucet' | 'infrastructure' | 'assets' | 'bug-report' | 'settings' | 'agent' | 'node' | 'admin' | 'security'>('dashboard');
   const [isAgent, setIsAgent] = useState(localStorage.getItem('agent_mode') === 'true');
 
   useEffect(() => {
@@ -182,6 +184,12 @@ function AppContent() {
             onClick={() => { setActiveTab('admin'); setIsSidebarOpen(false); }}
           />
           <NavItem 
+            icon={<ShieldAlert />} 
+            label="Security" 
+            active={activeTab === 'security'} 
+            onClick={() => { setActiveTab('security'); setIsSidebarOpen(false); }}
+          />
+          <NavItem 
             icon={<SettingsIcon />} 
             label="Settings" 
             active={activeTab === 'settings'} 
@@ -238,6 +246,7 @@ function AppContent() {
           {activeTab === 'agent' && <AgentScreen />}
           {activeTab === 'node' && <AngInfrastructure />}
           {activeTab === 'admin' && <AdminDashboard />}
+          {activeTab === 'security' && <SecurityDashboard />}
         </div>
       </main>
     </div>
