@@ -1,0 +1,17 @@
+<!-- AndroidManifest.xml Snippets for SIMU Ecosystem -->
+<permission android:name="com.simu.ecosystem.permission.SECURE_IPC" android:protectionLevel="signature" />
+<uses-permission android:name="com.simu.ecosystem.permission.SECURE_IPC" />
+<activity android:name=".MainActivity">
+    <intent-filter android:autoVerify="true">
+        <action android:name="android.intent.action.VIEW" />
+        <category android:name="android.intent.category.DEFAULT" />
+        <category android:name="android.intent.category.BROWSABLE" />
+        <data android:scheme="simu-browser" android:host="open" />
+    </intent-filter>
+    <intent-filter android:autoVerify="true">
+        <action android:name="android.intent.action.VIEW" />
+        <category android:name="android.intent.category.DEFAULT" />
+        <category android:name="android.intent.category.BROWSABLE" />
+        <data android:scheme="simu-nodes" android:host="validate" />
+    </intent-filter>
+</activity>
