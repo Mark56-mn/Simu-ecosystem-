@@ -15,6 +15,21 @@ export default defineConfig(({mode}) => {
         '@': path.resolve(__dirname, '.'),
       },
     },
+    optimizeDeps: {
+      exclude: [
+        'react-native',
+        '@react-native-async-storage/async-storage',
+        '@react-native-clipboard/clipboard',
+        '@react-native-community/netinfo',
+        'react-native-url-polyfill',
+        'expo-camera',
+        'expo-crypto',
+        'expo-image-picker',
+        'expo-local-authentication',
+        'expo-secure-store',
+        'expo-sqlite'
+      ]
+    },
     server: {
       // HMR is disabled in AI Studio via DISABLE_HMR env var.
       // Do not modifyâfile watching is disabled to prevent flickering during agent edits.

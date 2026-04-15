@@ -60,27 +60,16 @@ DO $$
 DECLARE
   admin_uid UUID := gen_random_uuid();
 BEGIN
-  -- Insert into auth.users (bypassing email confirmation by setting email_confirmed_at)
-  INSERT INTO auth.users (
-    instance_id, id, aud, role, email, encrypted_password, email_confirmed_at, created_at, updated_at, raw_app_meta_data, raw_user_meta_data, is_super_admin
-  ) VALUES (
-    '00000000-0000-0000-0000-000000000000',
-    admin_uid,
-    'authenticated',
-    'authenticated',
-    'admin@simugmail.com',
-    crypt('2026', gen_salt('bf')),
-    now(), -- This auto-confirms the email
-    now(),
-    now(),
-    '{"provider":"email","providers":["email"]}',
-    '{}',
-    false
-  )
-  ON CONFLICT (email) DO NOTHING;
-
-  -- Get the ID if it already existed
-  SELECT id INTO admin_uid FROM auth.users WHERE email = 'admin@simugmail.com';
+  -- Check if user exists first to avoid ON CONFLICT constraint issues
+  IF NOT EXISTS (SELECT 1 FROM auth.users WHERE email = 'admin@simugmail.com') THEN
+    INSERT INTO auth.users (
+      instance_id, id, aud, role, email, encrypted_password, email_confirmed_at, created_at, updated_at, raw_app_meta_data, raw_user_meta_data, is_super_admin
+    ) VALUES (
+      '00000000-0000-0000-0000-000000000000', admin_uid, 'authenticated', 'authenticated', 'admin@simugmail.com', crypt('2026', gen_salt('bf')), now(), now(), now(), '{"provider":"email","providers":["email"]}', '{}', false
+    );
+  ELSE
+    SELECT id INTO admin_uid FROM auth.users WHERE email = 'admin@simugmail.com';
+  END IF;
 
   -- Insert into public.users with admin role
   INSERT INTO public.users (id, role)
